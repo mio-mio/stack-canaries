@@ -65,7 +65,7 @@ The experimental results are shown below:
 
 I learned that stack canary insertion is determined heuristically, and these results revealed several interesting patterns:
 
-- Small character arrays, integer arrays, and pointer-related functions showed similar protection behavior under `-fstack-protector-strong`.
+- Small character arrays, integer arrays, and pointer-related functions showed similar protection behavior across different stack protector options.
 - As I expected, simple local integer, simple math, global-only, and heap-only functions were not protected unless `-fstack-protector-all` was used, suggesting they are not considered sufficiently risky by the default heuristics.
 - Interestingly, the function that is never called by the main() always had the canary protection.
 
