@@ -1,13 +1,13 @@
 # Stack Canaries Observations: Which Functions Are Considered Risky?
 
 ## 1. Introduction
-So far, I explored the behavior of NX, ASLR, and PIE. These are defenses that make exploitation unreliable.
+So far, I explored the behavior of [NX](https://github.com/mio-mio/nx-observation/blob/main/README.md), [ASLR](https://github.com/mio-mio/aslr/blob/main/README.md), and [PIE](https://github.com/mio-mio/pie/blob/main/README.md). These are defenses that make exploitation less reliable.
 
-However, stack canaries take a different approach. They detect corruption before control flow is hijacked.
+However, stack canaries take a different approach. They detect memory corruption before control flow is hijacked.
 
 Stack canaries can be enabled at compile time, but depending on compiler options, they may be inserted into some functions but not others.
 
-I learned that this decision is often heuristic-based.
+I learned that this decision is often based on heuristics.
 This made me wonder: what kinds of functions are actually protected?
 
 ## 2. What Stack Canaries Actually Do
@@ -37,15 +37,13 @@ The tested functions included:
 - never called by main function
 
 Canary-related instructions can be observed in the generated assembly, as shown below:
-![mov, sub, je,callの行](image.jpg)
+![mov, sub, je,callの行](images/FindingCanaryScreenshot2026-05-26122015.png)
 
 Before running the experiment, I made several predictions.
 
-I expected functions using pointers or with large buffers to be consistently protected by stack canaries.
-
-I also expected that character arrays and integer arrays would more likely be protected with -fstack-protector-strong.
-
-At the same time, I thought some functions using local structures, simple local integer, simple math, global variable only and heap only might not always trigger protection unless -fstack-protector-all was used.
+- I expected functions using pointers or with large buffers to be consistently protected by stack canaries.
+- I also expected that character arrays and integer arrays would more likely be protected with `-fstack-protector-strong`.
+- At the same time, I thought some functions using local structures, simple local integer, simple math, global variable only and heap only might not always trigger protection unless `-fstack-protector-all` was used.
 
 For additional curiosity, I also included a function that was never called from main().
 
@@ -67,12 +65,12 @@ The experimental results are shown below:
 
 I learned that stack canary insertion is determined heuristically, and these results revealed several interesting patterns:
 
-- Small character arrays, integer arrays, and pointer-related functions showed similar protection behavior under -fstack-protector-strong.
-- As I expected, simple local integer, simple math, global-only, and heap-only functions were not protected unless -fstack-protector-all was used, suggesting they were not considered sufficiently risky by the default heuristics.
+- Small character arrays, integer arrays, and pointer-related functions showed similar protection behavior under `-fstack-protector-strong`.
+- As I expected, simple local integer, simple math, global-only, and heap-only functions were not protected unless `-fstack-protector-all` was used, suggesting they were not considered sufficiently risky by the default heuristics.
 - Interestingly, the function never called by the main function always had the canary protection.
 
-## 4.1. -fstack-protector-explicit experiment
-During this research, I noticed another option called -fstack-protector-explicit. According to the official document, it only protects the functions with stack_protect attribute.
+## 4.1. `-fstack-protector-explicit` experiment
+During this research, I noticed another option called `-fstack-protector-explicit`. According to the official document, it only protects the functions with stack_protect attribute.
 
 I compiled the program using this option as well and observed the results. The functions with stack_protect attribute were protected, and other functions did not receive canary protection. 
 
@@ -85,8 +83,8 @@ Actually this experiment started only with multiple functions in main(). Initial
 
 ## 5. Key Insight
 - I learned that GCC heuristics may consider buffer size when deciding whether to insert stack canaries.
-- From what I observed, -fstack-protector-strong appears to behave similarly to -fstack-protector-all in many practical cases.
-- Result of -fstack-protector-explicit was very different from other options, but I understand it is needed for specific environment.
+- From what I observed, `-fstack-protector-strong` appears to behave similarly to `-fstack-protector-all` in many practical cases.
+- Result of `-fstack-protector-explicit` was very different from other options, but I understand it is needed for specific environment.
 
 ## 6. Conclusion
 This experiment helped me better understand which kinds of functions are considered risky by GCC heuristics.
